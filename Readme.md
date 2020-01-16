@@ -16,8 +16,8 @@ Processed ribosome profiling data is needed for training, and the input file sho
 Each sample contains three lines, including:
 ```
 gene name or notation start with ">";
-codon list seperated with tab;
-counts of ribosome footprints at ribosomal A site.
+list of codons seperated with tab;
+list of counts for ribosome footprints at ribosomal A site.
 ```
 An example of data format can be found in
 ```
@@ -40,5 +40,7 @@ The program will create a working directory and the best models will be stored i
 results/RiboMIMO_*/
 ```
 
-If you have any questions, please feel free to contact me
+# Contact
+If you have any questions, please feel free to contact me.
+
 Email: tiantz17@mails.tsinghua.edu.cn
