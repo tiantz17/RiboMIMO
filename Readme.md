@@ -1,7 +1,6 @@
 # RiboMIMO
-<img src="data/model.png" width="600" align="center">
 
-This is the source code for paper entitled "RiboMIMO: Full-length Ribosome Distribution Prediction by a Multi-Input Multi-Output Model". 
+This is the source code for paper entitled "Full-length Ribosome Density Prediction by a Multi-Input and Multi-Output Model". 
 
 # Requirement
 RiboMIMO is implemented in Python 3, and the requirements are listed as follows:
