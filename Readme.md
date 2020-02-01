@@ -10,7 +10,7 @@ pytorch  1.1.0
 sklearn  0.21.3
 ```
 
-# Data preparing
+# Data preparison
 Processed ribosome profiling data is needed for training, and the input file should be in fasta format. 
 Each sample contains three lines, including:
 ```
