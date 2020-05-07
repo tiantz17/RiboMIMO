@@ -26,7 +26,6 @@ class RiboMIMOModel(object):
         self.RNN_output_dims = args.RNN_hidden_dims
         self.RNN_depth = args.RNN_depth
         self.add_nt = args.nt
-        self.add_pos = args.pos
         self.num_class = 3
 
         self.batch_size = 16
@@ -46,10 +45,6 @@ class RiboMIMOModel(object):
         if self.add_nt:
             self.input_dims += 4 * 3
             encode += "_nt"
-        if self.add_pos:
-            self.input_dims += 4
-            encode += "_pos"
-
 
         self.num_time = 1 # n times k fold cross-validation
         self.num_fold = 10 # n times k fold cross-validation
@@ -96,7 +91,6 @@ class RiboMIMOModel(object):
                   'RNN_output_dims': self.RNN_output_dims,
                   'RNN_depth': self.RNN_depth,
                   'add_nt': self.add_nt,
-                  'add_pos': self.add_pos,
                   'batch_size': self.batch_size,
                   'max_epoch': self.max_epoch,
                   'early_stop': self.early_stop,
@@ -353,7 +347,6 @@ def main():
     parser.add_argument("--data", default="example", help="file path of raw data", type=str)
     # define model
     parser.add_argument("--nt", default=False, action="store_true", help="nt encoding")
-    parser.add_argument("--pos", default=False, action="store_true", help="position encoding")
     parser.add_argument("--RNN_hidden_dims", default=256, help="RNN_hidden_dims", type=int)
     parser.add_argument("--RNN_depth", default=2, help="RNN_depth", type=int)
     args = parser.parse_args()
