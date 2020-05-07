@@ -21,6 +21,7 @@ def weights_init(m):
         nn.init.constant_(m.bias, 0)
 
 
+       
 class RiboMIMO(nn.Module):
     """
     RNN model for predicting ribosome density using sequence data
@@ -35,101 +36,24 @@ class RiboMIMO(nn.Module):
                           batch_first=True, bidirectional=True)
         self.fc = nn.Sequential(
             nn.Linear(output_dims*2, output_dims),
-            nn.ReLU(),
-        )
+            nn.ReLU()
+            )
         self.fc_reg = nn.Linear(output_dims, 1)
         self.num_state = num_class + 2
         self.fc_cla = nn.Linear(output_dims, self.num_state)
-        self.START = 0
-        self.STOP = self.num_state - 1
-        self.transition = nn.Parameter(torch.randn(self.num_state, self.num_state))
-        self.use_cuda = use_cuda
-
+        
     def get_rnn_feature(self, x, length):
         x = pack_padded_sequence(x, length, batch_first=True)
         x, _ = self.rnn(x)
         x, _ = pad_packed_sequence(x, batch_first=True, padding_value=0.0)
         return x
 
-    def viterbi(self, emission):
-        score = torch.Tensor([-np.inf for _ in range(self.num_state)])
-        if self.use_cuda:
-            score = score.cuda()
-        score[self.START] = 0
-        backtrack = []
-        for i in range(emission.shape[0]):
-            step_score, step_bt = (score + self.transition).max(-1)
-            score = step_score + emission[i]
-            backtrack.append(step_bt)
-        temp_idx = (score + self.transition[self.STOP]).argmax()
-        best_score = score[temp_idx]
-        best_path = [temp_idx]
-        for bptrs_t in reversed(backtrack):
-            temp_idx = bptrs_t[temp_idx]
-            best_path.append(temp_idx)
-        best_path = reversed(torch.LongTensor(best_path)[:-1])
-        return best_score, best_path
-
-    def partition(self, emission):
-        # Time-consuming
-        # Do the forward algorithm to compute the partition function
-        init_alphas = torch.full((1, self.num_state), -1e6)
-        if self.use_cuda:
-            init_alphas = init_alphas.cuda()
-        # START_TAG has all of the score.
-        init_alphas[0][self.START] = 0.
-        # Wrap in a variable so that we will get automatic backprop
-        forward_var = init_alphas
-        # Iterate through the sentence
-        for feat in emission:
-            forward_var = self.log_sum_exp(forward_var + feat.unsqueeze(-1) + self.transition).unsqueeze(0)
-        terminal_var = forward_var + self.transition[self.STOP]
-        alpha = self.log_sum_exp(terminal_var)
-        return alpha
-
-    def score_tag(self, emission, tags):
-        # Gives the score of a provided tag sequence
-        if self.use_cuda:
-            tags = torch.cat([torch.tensor([self.START], dtype=torch.long).cuda(), tags])
-        else:
-            tags = torch.cat([torch.tensor([self.START], dtype=torch.long), tags])
-        score = self.transition[tags[1:], tags[:-1]].sum() + emission[torch.arange(len(tags)-1), tags[1:]].sum()
-        score = score + self.transition[[self.STOP], tags[-1]]
-        return score
-
-    def viterbi_batch(self, emission_list):
-        best_score_list, best_path_list = list(zip(*list(map(self.viterbi, emission_list))))
-        best_score_list = torch.Tensor(best_score_list)
-        return best_score_list, best_path_list
-
-    def partition_batch(self, emission_list):
-        list_alpha = list(map(self.partition, emission_list))
-        return list_alpha
-
-    def score_tag_batch(self, emission_list, score_tag_list):
-        list_score = list(map(self.score_tag, emission_list, score_tag_list))
-        return list_score
-
-    def neg_log_likelihood(self, emission_list, score_tag_list):
-        score_tag_list = [score_tag_list[i][0:len(emission_list[i])] for i in range(len(score_tag_list))]
-        list_score = self.score_tag_batch(emission_list, score_tag_list)
-        list_alpha = self.partition_batch(emission_list)
-        return -(torch.Tensor(list_score)- torch.Tensor(list_alpha)).mean()
-
-    def forward(self, x, length, level_list):
+    def forward(self, x, length):
         x = self.get_rnn_feature(x, length)
         x = self.fc(x)
         y = self.fc_reg(x).squeeze(2)
         z = self.fc_cla(x)
-        emission_list = [z[k, 0:length[k].long()] for k in range(z.shape[0])]
-        loss = self.neg_log_likelihood(emission_list, level_list)
-        return y, z, loss
-
-    @staticmethod
-    def log_sum_exp(vec):
-        max_score = vec.max(-1)[0]
-        return (vec - max_score.unsqueeze(-1)).exp().sum(-1).log() + max_score
-
+        return y, z, None
     def score_reg(self, pred, label):
         r2 = r2_score(label, pred)
         mse = mean_squared_error(label, pred)
@@ -137,9 +61,9 @@ class RiboMIMO(nn.Module):
         return r2, mse, corr
 
     def score_cls(self, pred, label):
-        label = np.eye(self.num_state-1)[label]
-        pred = pred[:, 1:self.num_state-2]
-        label = label[:, 1:self.num_state-2]
+        label = np.eye(4)[label]
+        pred = pred[:, 1:3]
+        label = label[:, 1:3]
         auroc, aupr = 0.0, 0.0
         try:
             auroc = roc_auc_score(label, pred)
@@ -353,29 +277,13 @@ class DataLoader(object):
             self.list_fold.append(self.list_gene[start:start+fold_size[i]])
             start += fold_size[i]
 
-    def position_encoding(self, sentence_size, embedding_size):
-        """
-        Position Encoding
-        """
-        encoding = np.ones((embedding_size, sentence_size), dtype=np.float32)
-        ls = sentence_size + 1
-        le = embedding_size + 1
-        for i in range(1, le):
-            for j in range(1, ls):
-                encoding[i - 1, j - 1] = (i - (le - 1) / 2) * (j - (ls - 1) / 2)
-        encoding = 1 + 4 * encoding / embedding_size / sentence_size
-        return np.transpose(encoding)
-
-    def get_data_pack(self, gene_list, add_nt=False, add_pos=False):
+    def get_data_pack(self, gene_list, add_nt=False):
         batch_size = len(gene_list)
         x_input = [self.dict_seq_codon[gene] for gene in gene_list]
         length = [len(self.dict_seq_codon[gene]) for gene in gene_list]
         if add_nt:
             x_nt = [self.dict_seq_nt[gene] for gene in gene_list]
             x_input = [np.concatenate([x_input[i], x_nt[i].reshape((len(x_nt[i])//3, -1))], axis=1) for i in range(batch_size)]
-        if add_pos:
-            pos_enc = [self.position_encoding(length[i], 4) for i in range(batch_size)]
-            x_input = [np.concatenate([x_input[i], pos_enc[i]], axis=1) for i in range(batch_size)]
 
         density = []
         for gene in gene_list:
