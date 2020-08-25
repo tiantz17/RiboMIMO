@@ -6,8 +6,9 @@ This is the source code for paper entitled "Full-length Ribosome Density Predict
 RiboMIMO is implemented in Python 3, and the requirements are listed as follows:
 ```
 python   3.7.4
-pytorch  1.1.0
+pytorch  1.5.0
 sklearn  0.21.3
+cuda     10.2
 ```
 
 # Data preparison
@@ -18,15 +19,15 @@ gene name or notation start with ">";
 list of codons seperated with tab;
 list of counts for ribosome footprints at ribosomal A site.
 ```
-An example of data format can be found in
+The processed datasets can be found in 
 ```
-data/example
+data/
 ```
 
 # Run
 The RiboMIMO model can be trained and cross-validated with command:
 ```
-python -u runRiboMIMO.py --data [FILENAME] --gpu [GPU ID] 
+python -u runRiboMIMO.py --nt --aa --data [DATASET] --gpu [GPU ID] 
 ```
 
 For more information, please run help:
@@ -36,7 +37,7 @@ python -u runRiboMIMO.py --help
 
 The program will create a working directory and the best models will be stored in the following folder:
 ```
-results/RiboMIMO_*/
+results/[DATASET]/RiboMIMO_*/
 ```
 
 # Contact
