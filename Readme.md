@@ -19,9 +19,9 @@ gene name or notation start with ">";
 list of codons seperated with tab;
 list of counts for ribosome footprints at ribosomal A site.
 ```
-The processed datasets can be found in 
+The processed datasets including Subtelny14 (yeast), Santos19-replete (yeast), Santos19-starved (yeast) and Mohammad16 (ecoli), Mohammad19-1 (ecoli) and Mohammad19-2 (ecoli) can be found in 
 ```
-data/
+data/[DATASET]/
 ```
 
 # Run
