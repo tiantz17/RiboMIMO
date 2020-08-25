@@ -121,5 +121,6 @@ def get_saliency_one_fold():
         pickle.dump(saliency_full, open(path_save+"{}".format(gene_name), "wb"))
     
 if __name__ == "__main__":
-    print("python -u getSaliency.py [GPU ID] [DATASET] [FOLD]")
+    print("Usage: python -u getSaliency.py [GPU ID] [DATASET] [FOLD]")
+    print("The obtained saliency map matrix CIS[j, i] indicating the contribution from i to j")
     get_saliency_one_fold()
