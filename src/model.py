@@ -91,10 +91,6 @@ class DataLoader(object):
             self.filename = "Asite_codon_SRR7759812.txt"
         elif self.dataset == "Mohammad19-2":
             self.dataset = "Asite_codon_SRR7759814.txt"
-        elif self.dataset == "Santos19-replete":
-            self.filename = "SRR8439605_Asite.txt"
-        elif self.dataset == "Santos19-starved":
-            self.filename = "SRR8439607_Asite.txt"
         else:
             raise NotImplementedError("No data found for dataset {}".format(dataset))
         self.aa_table = utils.aa_table
