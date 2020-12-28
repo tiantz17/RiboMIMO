@@ -35,7 +35,7 @@ parser.add_argument("--learning_rate", default=1e-3, help="learning rate", type=
 parser.add_argument("--weight_decay", default=1e-6, help="weight decay", type=float)
 
 # Fast!
-def get_saliency(RiboMIMONet, idx, len_codon):
+def get_saliency_one_sample(RiboMIMONet, idx, len_codon):
     # calculate saliency map
     saliency_sum = []
     x_input, length, density, mask_density, level, batch_index = RiboMIMONet.get_data_batch(np.array([idx]))
@@ -54,7 +54,7 @@ def get_saliency(RiboMIMONet, idx, len_codon):
     saliency_full = saliency_sum.numpy().sum(2)
     return saliency_full
 
-def get_saliency_one_fold():
+def get_saliency_map():
     os.environ["CUDA_VISIBLE_DEVICES"] = sys.argv[1]
     args = parser.parse_args([])
 
@@ -72,55 +72,36 @@ def get_saliency_one_fold():
     repeat = 0
     RiboMIMONet.split_data(seeds[repeat])
     # replace the model_path with the path containing trained models
-    if args.dataset == "Subtelny14":
-        model_path = "Subtelny14/**********/"
-        
-    elif args.dataset == "Mohammad16":
-        model_path = "Mohammad16/**********/"
-        
-    elif args.dataset == "Santos19-replete":
-        model_path = "Santos19-replete/**********/"
-        
-    elif args.dataset == "Santos19-starved":
-        model_path = "Santos19-starved/**********/"
-        
-    elif args.dataset == "Mohammad19-1":
-        model_path = "Mohammad19-1/**********/"
-        
-    elif args.dataset == "Mohammad19-2":
-        model_path = "Mohammad19-2/**********/"
+    model_path = sys.argv[3]
 
-    else:
-        pass
+    for fold in range(args.num_fold):
+        logging.info("{}/{} repeat {}/{} fold".format(repeat+1, RiboMIMONet.num_repeat, fold+1, RiboMIMONet.num_fold))
+        RiboMIMONet.load_model()
+        RiboMIMONet.model.load_state_dict(torch.load(model_path+"best_model_{}_{}.pth".format(repeat, fold)))
+        RiboMIMONet.index_test = RiboMIMONet.data.list_fold[fold]
+        RiboMIMONet.index_train = RiboMIMONet.data.list_fold[:fold] + RiboMIMONet.data.list_fold[fold+1:]
+        RiboMIMONet.index_train = np.concatenate(RiboMIMONet.index_train)
+        index_eval = RiboMIMONet.index_test
+        RiboMIMONet.get_thresh()
+        RiboMIMONet.data.get_data_pack(index_eval, RiboMIMONet.add_nt, RiboMIMONet.add_aa)
+        RiboMIMONet.data.get_data_pack_cls(index_eval, RiboMIMONet.threshs)
+        path_save = "./results/CIS_"+args.dataset+"/"
+        if not os.path.exists(path_save):
+            os.makedirs(path_save)
 
-    fold = int(sys.argv[3])
-    logging.info("{}/{} repeat {}/{} fold".format(repeat+1, RiboMIMONet.num_repeat, fold+1, RiboMIMONet.num_fold))
-    RiboMIMONet.load_model()
-    RiboMIMONet.model.load_state_dict(torch.load("../results/"+model_path+"best_model_{}_{}.pth".format(repeat, fold)))
-    RiboMIMONet.index_test = RiboMIMONet.data.list_fold[fold]
-    RiboMIMONet.index_train = RiboMIMONet.data.list_fold[:fold] + RiboMIMONet.data.list_fold[fold+1:]
-    RiboMIMONet.index_train = np.concatenate(RiboMIMONet.index_train)
-    index_eval = RiboMIMONet.index_test
-    RiboMIMONet.get_thresh()
-    RiboMIMONet.data.get_data_pack(index_eval, RiboMIMONet.add_nt, RiboMIMONet.add_aa)
-    RiboMIMONet.data.get_data_pack_cls(index_eval, RiboMIMONet.threshs)
-    path_save = "./results/saliencymap_"+args.dataset+"/"
-    if not os.path.exists(path_save):
-        os.makedirs(path_save)
+        for idx in range(len(index_eval)):
+            gene_name = index_eval[idx]
+            seq = RiboMIMONet.data.dict_seq[gene_name]
+            len_codon = len(seq)//3
+            x_input, length, density, mask_density, level, batch_index = RiboMIMONet.get_data_batch(np.array([idx]))
+            pred, pred_cls, loss = RiboMIMONet.model(x_input, length)
+            print(idx, gene_name, len_codon)
+            print(pearsonr(pred[0].cpu().data.numpy(), density[0].cpu().data.numpy())[0])
 
-    for idx in range(len(index_eval)):
-        gene_name = index_eval[idx]
-        seq = RiboMIMONet.data.dict_seq[gene_name]
-        len_codon = len(seq)//3
-        x_input, length, density, mask_density, level, batch_index = RiboMIMONet.get_data_batch(np.array([idx]))
-        pred, pred_cls, loss = RiboMIMONet.model(x_input, length)
-        print(idx, gene_name, len_codon)
-        print(pearsonr(pred[0].cpu().data.numpy(), density[0].cpu().data.numpy())[0])
-
-        saliency_full = get_saliency(RiboMIMONet, idx, len_codon)    
-        pickle.dump(saliency_full, open(path_save+"{}".format(gene_name), "wb"))
+            saliency_full = get_saliency_one_sample(RiboMIMONet, idx, len_codon)    
+            pickle.dump(saliency_full, open(path_save+"{}".format(gene_name), "wb"))
     
 if __name__ == "__main__":
-    print("Usage: python -u getSaliency.py [GPU ID] [DATASET] [FOLD]")
+    print("Usage: python -u getSaliency.py [GPU ID] [DATASET] [MODEL PATH]")
     print("The obtained saliency map matrix CIS[j, i] indicating the contribution from i to j")
-    get_saliency_one_fold()
+    get_saliency_map()
