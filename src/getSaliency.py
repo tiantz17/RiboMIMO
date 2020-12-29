@@ -74,7 +74,7 @@ def get_saliency_map():
             ##############
             # for debug only
             ##############
-            break
+            # break
             ##############
     
 if __name__ == "__main__":
