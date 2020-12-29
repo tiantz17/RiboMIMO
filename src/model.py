@@ -81,17 +81,10 @@ class RiboMIMO(nn.Module):
 class DataLoader(object):
     """ Data loader for riboseq data"""
     def __init__(self, path, dataset, use_median=False):
-        self.path = path + "data/" + dataset + "/"
+        self.path = path + "data/"
         self.dataset = dataset
-        if self.dataset == "Subtelny14":
-            self.filename = "A-codon-site-yeast.txt"
-        elif self.dataset == "Mohammad16":
-            self.filename = "Ecoli_Mo16_codon_all"
-        elif self.dataset == "Mohammad19-1":
-            self.filename = "Asite_codon_SRR7759812.txt"
-        elif self.dataset == "Mohammad19-2":
-            self.dataset = "Asite_codon_SRR7759814.txt"
-        else:
+        self.filename = dataset + ".txt"
+        if not os.path.exists(self.path + self.filename):
             raise NotImplementedError("No data found for dataset {}".format(dataset))
         self.aa_table = utils.aa_table
         self.codon2aa = utils.codon2aa

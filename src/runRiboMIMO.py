@@ -25,10 +25,10 @@ class RiboMIMOModel(object):
         """ parameters """
         assert args.RNN_model in ["RiboMIMO"]
         self.RNN_model = args.RNN_model
-        self.RNN_output_dims = args.RNN_hidden_dims
+        self.RNN_hidden_dims = args.RNN_hidden_dims
         self.RNN_depth = args.RNN_depth
-        self.add_nt = args.nt
-        self.add_aa = args.aa
+        self.add_nt = args.add_nt
+        self.add_aa = args.add_aa
         self.threshold = args.threshold
         self.alpha = args.alpha
         self.sim = args.sim
@@ -60,10 +60,15 @@ class RiboMIMOModel(object):
 
         """ local directory """
         self.path = "../"
-    
-        file_folder = "results/{}/RiboMIMO{}_{}_{}_{}_{}_sim_{}_bs_{}_cv_{}x{}_{}"
+        if self.info == "cis":
+            file_folder = "results/CIS_{}{}_{}_{}_{}_{}_sim_{}_bs_{}_cv_{}x{}_{}"
+        elif self.info == "analysis":
+            file_folder = "results/Analysis_{}{}_{}_{}_{}_{}_sim_{}_bs_{}_cv_{}x{}_{}"
+        else:
+            file_folder = "results/RiboMIMO_{}{}_{}_{}_{}_{}_sim_{}_bs_{}_cv_{}x{}_{}"
+
         file_folder = file_folder.format(self.dataset, encode, self.threshold, self.alpha, 
-                                         self.RNN_output_dims, self.RNN_depth,
+                                         self.RNN_hidden_dims, self.RNN_depth,
                                          self.sim, self.batch_size,
                                          self.num_repeat, self.num_fold, self.info)
         file_folder += time.strftime("_%Y%m%d_%H%M%S/", time.localtime())
@@ -95,23 +100,29 @@ class RiboMIMOModel(object):
         logging.getLogger().addHandler(console)
 
     def save_hyperparameter(self):
-        params = {'path': self.path,
-                  'RNN_model': self.RNN_model,
-                  'RNN_output_dims': self.RNN_output_dims,
-                  'RNN_depth': self.RNN_depth,
-                  'add_nt': self.add_nt,
-                  'add_aa': self.add_aa, 
-                  'threshold': self.threshold,
-                  'alpha': self.alpha,
-                  'batch_size': self.batch_size,
-                  'max_epoch': self.max_epoch,
-                  'early_stop': self.early_stop,
-                  'learning_rate': self.learning_rate,
-                  'weight_decay': self.weight_decay,
-                  'seed': self.seed,
-                  'info': self.info,
-                  'use_cuda': self.use_cuda,
-                  }
+        params = {
+            'path': self.path,
+            'dataset': self.dataset,
+            'RNN_model': self.RNN_model,
+            'RNN_hidden_dims': self.RNN_hidden_dims,
+            'RNN_depth': self.RNN_depth,
+            'add_nt': self.add_nt,
+            'add_aa': self.add_aa, 
+            'threshold': self.threshold,
+            'alpha': self.alpha,
+            'num_repeat': self.num_repeat,
+            'num_fold': self.num_fold,
+            'batch_size': self.batch_size,
+            'max_epoch': self.max_epoch,
+            'early_stop': self.early_stop,
+            'learning_rate': self.learning_rate,
+            'weight_decay': self.weight_decay,
+            'seed': self.seed,
+            'info': self.info,
+            'use_cuda': self.use_cuda,
+            'sim': self.sim,
+            'use_median': self.use_median,
+        }
 
         json.dump(params, open(self.save_path + "config", "w+"))
 
@@ -169,7 +180,7 @@ class RiboMIMOModel(object):
     def load_model(self):
         logging.info("Loading model...")
         self.model = RiboMIMO(self.input_dims,
-                              self.RNN_output_dims,
+                              self.RNN_hidden_dims,
                               self.RNN_depth,
                               num_class=len(self.threshold.split(","))+1)
         self.optimizer = optim.Adam(filter(lambda p: p.requires_grad, self.model.parameters()),
@@ -199,7 +210,7 @@ class RiboMIMOModel(object):
         scores_std = np.std(scores, 0)
         # print score
         logging.info("Done {} repeat {} fold cross-validation".format(self.num_repeat, self.num_fold))
-        printstring = "\033[91mRibosome, r2 {:.6f} {:.6f}, mse {:.6f} {:.6f}, corr {:.6f} {:.6f}\033[0m"
+        printstring = "\033[91mRiboMIMO, r2 {:.6f} {:.6f}, mse {:.6f} {:.6f}, corr {:.6f} {:.6f}\033[0m"
         logging.info(printstring.format(scores_mean[0], scores_std[0], scores_mean[1], scores_std[1], scores_mean[2], scores_std[2]))
 
     def get_thresh(self):
@@ -360,8 +371,8 @@ def main():
     parser.add_argument("--sim", default=-1, help="similarity between folds", type=float)
     parser.add_argument("--use_median", default=False, action="store_true", help="using median")
     # define model
-    parser.add_argument("--nt", default=False, action="store_true", help="nt encoding")
-    parser.add_argument("--aa", default=False, action="store_true", help="aa encoding")    
+    parser.add_argument("--add_nt", default=False, action="store_true", help="nt encoding")
+    parser.add_argument("--add_aa", default=False, action="store_true", help="aa encoding")    
 
     parser.add_argument("--RNN_model", default="RiboMIMO", help="RNN models", type=str)
     parser.add_argument("--RNN_hidden_dims", default=256, help="RNN_hidden_dims", type=int)
