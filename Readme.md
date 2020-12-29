@@ -67,7 +67,7 @@ results/CIS_[DATASET]*/
 
 Note that the folder name of ```[CIS FOLDER]``` follows the same pattern with ```[MODEL FOLDER]```.
 
-# 4. Analyzing
+# 4. Analyze
 The code for analyzing the trained models and CIS is provided in jupyter notebook ```src/analyses.ipynb```.
 
 The program will create a working directory and the analysis results will be stored in the following ```[ANALYSIS FOLDER]```:
