@@ -37,6 +37,7 @@ You can also use customed datset following the same fasta format, name it ```[DA
 # 2. Train RiboMIMO
 The RiboMIMO model can be trained and cross-validated with command:
 ```
+cd src/
 python -u runRiboMIMO.py --add_nt --add_aa --dataset [DATASET] --gpu [GPU ID] 
 ```
 
@@ -45,7 +46,7 @@ For more information, please run help:
 python -u runRiboMIMO.py --help
 ```
 
-The program will create a working directory and the best models will be stored in the following [MODEL FOLDER]:
+The program will create a working directory and the best models will be stored in the following ```[MODEL FOLDER]```:
 ```
 results/RiboMIMO_[DATASET]*/
 ```
@@ -55,20 +56,21 @@ To analyze the trained RiboMIMO model, we use saliency maps to account for the c
 
 CIS can be calculated using the trained RiboMIMO model with command:
 ```
+cd src/
 python -u getSaliency.py [GPU ID] [MODEL FOLDER]
 ```
 
-The program will create a working directory and the CIS results will be stored in the following [CIS FOLDER]:
+The program will create a working directory and the CIS results will be stored in the following ```[CIS FOLDER]```:
 ```
 results/CIS_[DATASET]*/
 ```
 
-Note that the folder name of [CIS FOLDER] follows the same pattern with [MODEL FOLDER].
+Note that the folder name of ```[CIS FOLDER]``` follows the same pattern with ```[MODEL FOLDER]```.
 
 # 4. Analyzing
 The code for analyzing the trained models and CIS is provided in jupyter notebook ```src/analyses.ipynb```.
 
-The program will create a working directory and the analysis results will be stored in the following [ANALYSIS FOLDER]:
+The program will create a working directory and the analysis results will be stored in the following ```[ANALYSIS FOLDER]```:
 ```
 results/Analysis_[DATASET]*/
 ```
