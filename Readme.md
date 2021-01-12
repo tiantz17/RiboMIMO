@@ -75,6 +75,20 @@ The program will create a working directory and the analysis results will be sto
 results/Analysis_[DATASET]*/
 ```
 
+# 5. Predictions
+The predicted ribosome densities at each codon position of genes in the test sets are provided in the ```prediction/```.
+
+The results are stored in ```dict``` format, and can be loaded using the following python command:
+```
+import pickle
+# load dict
+predict_dict = pickle.load(open("./prediction/RiboMIMO_yeast_Subtelny14_pred", "rb"))
+# get label and prediction results for gene YOR098C
+label, pred = temp['YOR098C']
+```
+
+
+
 # Contact
 If you have any questions, please feel free to contact me.
 
