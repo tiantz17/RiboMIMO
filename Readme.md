@@ -2,6 +2,8 @@
 
 This is the source code for paper entitled "Full-length Ribosome Density Prediction by a Multi-Input and Multi-Output Model". 
 
+> Tian T, Li S, Lang P, Zhao D, Zeng J (2021) Full-length ribosome density prediction by a multi-input and multi-output model. PLOS Computational Biology 17(3): e1008842. https://doi.org/10.1371/journal.pcbi.1008842
+
 To reproduce the results in our paper or analyze new ribo-seq dataset using RiboMIMO, you need to follow the steps below:
 
 # 0. Requirement
